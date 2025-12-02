@@ -1,0 +1,53 @@
+
+name: CI Pipeline - C App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test-package-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Build application
+        run: |
+          mkdir -p build
+          gcc main.c -o build/app
+          ls -l build
+
+      - name: Run unit tests
+        run: |
+          mkdir -p build
+          gcc Tests/test1.c -o build/test_app
+          ./build/test_app
+          ls -l build
+
+      - name: Create build artifact (zip)
+        run: |
+          zip -r build.zip build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: c-build
+          path: build.zip
+
+      - name: Simulated Deploy - download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: c-build
+          path: ./downloaded
+
+      - name: Simulated Deploy - print message using secret
+        env:
+          JISAN_SECRET_API: ${{ secrets.JISAN_SECRET_API }}
+        run: |
+          echo "Downloaded files:"
+          ls -la ./downloaded
+          echo "Deployment using API Key: $JISAN_SECRET_API"
+          echo "Deployment successful!"
